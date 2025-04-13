@@ -9,16 +9,16 @@ type Order struct {
 	ShippingAddress string        `gorm:"not null" json:"shippingAddress"`
 	ShippingCity    string        `gorm:"not null" json:"shippingCity"`
 	Total           uint          `gorm:"not null" json:"total"`
-	Status          string        `gorm:"not null" json:"status"`
+	Status          uint          `gorm:"not null" json:"status"`
 	OrderDetails    []OrderDetail `gorm:"foreignKey:OrderId"`
 	Payment         Payment       `gorm:"foreignKey:OrderId"`
 }
 
 type OrderDetail struct {
-	OrderId     uint `gorm:"primaryKey"`
-	ProductId   uint `gorm:"primaryKey"`
-	Qty         uint `json:"qty"`
-	PriceDetail uint `json:"priceDetail"`
+	OrderId   uint `gorm:"primaryKey"`
+	ProductId uint `gorm:"primaryKey"`
+	Qty       uint `json:"qty"`
+	Subtotal  uint `json:"subtotal"`
 }
 
 type CreateOrderRequest struct {
@@ -44,12 +44,12 @@ type OrderDataResponse struct {
 	ShippingAddress     string                `json:"shippingAddress"`
 	ShippingCity        string                `json:"shippingCity"`
 	Total               uint                  `json:"total"`
-	Status              string                `json:"status"`
+	Status              uint                  `json:"status"`
 	OrderDetailResponse []OrderDetailResponse `json:"orderDetails"`
 }
 
 type OrderDetailResponse struct {
-	ProductId   uint `json:"productId"`
-	Qty         uint `json:"qty"`
-	PriceDetail uint `json:"priceDetail"`
+	ProductId uint `json:"productId"`
+	Qty       uint `json:"qty"`
+	Subtotal  uint `json:"subtotal"`
 }

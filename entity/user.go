@@ -17,7 +17,7 @@ const (
 type User struct {
 	gorm.Model
 	Username    string    `gorm:"unique;not null;size:50" json:"username"`
-	Password    string    `gorm:"not null" json:"password"`
+	Password    string    `gorm:"not null;type:text" json:"password"`
 	Firstname   string    `gorm:"not null" json:"firstname"`
 	Lastname    string    `gorm:"not null" json:"lastname"`
 	Dob         time.Time `gorm:"not null;type:date" json:"dob"`
