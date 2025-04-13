@@ -23,10 +23,21 @@ type User struct {
 	Dob         time.Time `gorm:"not null;type:date" json:"dob"`
 	Address     string    `gorm:"not null" json:"address"`
 	Email       string    `gorm:"unique;not null;size:255" json:"email"`
-	Phonenumber string    `gorm:"unique;not null" json:"phonenumber"`
+	Phonenumber string    `gorm:"unique;not null" json:"phoneNumber"`
 	Role        Role      `gorm:"not null;type:enum('admin', 'customer');default:customer" json:"role"`
 	Token       string    `gorm:"default:null" json:"access_token"`
 	Orders      []Order   `gorm:"foreignKey:UserId"`
+}
+
+type UserRegisterRequest struct {
+	Username    string `json:"username" binding:"required"`
+	Password    string `json:"password" binding:"required"`
+	Firstname   string `json:"firstname" binding:"required"`
+	Lastname    string `json:"lastname" binding:"required"`
+	Dob         string `json:"dob" binding:"required"`
+	Address     string `json:"address" binding:"required"`
+	Email       string `json:"email" binding:"required"`
+	Phonenumber string `json:"phoneNumber" binding:"required"`
 }
 
 type UserLoginRequest struct {
@@ -47,15 +58,15 @@ type UserDataResponse struct {
 	Dob         time.Time `json:"dob"`
 	Address     string    `json:"address"`
 	Email       string    `json:"email"`
-	Phonenumber *int      `json:"phonenumber"`
+	Phonenumber string    `json:"phoneNumber"`
 	Role        Role      `json:"role"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type UserChangePassword struct {
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
 }
 
 type UserChangePasswordResponse struct {
@@ -63,7 +74,7 @@ type UserChangePasswordResponse struct {
 }
 
 type UserLoginResponse struct {
-	Token string `json:"token"`
+	Token string `json:"access_token"`
 }
 
 func (u *User) HashPassword(password string) error {
