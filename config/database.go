@@ -37,6 +37,7 @@ func ConnectDatabase() *gorm.DB {
 func Migrate(db *gorm.DB) {
 	err := db.AutoMigrate(
 		&entity.User{},
+		&entity.Category{},
 		&entity.Product{},
 		&entity.Order{},
 		&entity.Payment{},

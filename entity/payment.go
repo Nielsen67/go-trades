@@ -36,6 +36,6 @@ type PaymentDataResponse struct {
 	OrderId   uint      `json:"orderId"`
 	Method    Method    `json:"method"`
 	Amount    uint      `json:"amount"`
-	Status    string    `json:"status"`
+	Status    uint      `json:"status"`
 	CreatedAt time.Time `json:"createdAt"`
 }
