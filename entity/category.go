@@ -7,6 +7,7 @@ type Category struct {
 	Code     string    `gorm:"unique;not null" json:"code"`
 	Name     string    `gorm:"unique;not null" json:"name"`
 	Products []Product `gorm:"foreignKey:CategoryId"`
+
 }
 
 type CategoryRequest struct {

@@ -37,9 +37,11 @@ type UpdateProductRequest struct {
 	Name        string `json:"name" binding:"omitempty"`
 	Description string `json:"description" binding:"omitempty"`
 	Price       uint   `json:"price" binding:"omitempty"`
+   uint   `json:"price" binding:"omitempty"`
 }
 
 type ProductDataResponse struct {
+	CategoryId  string    `json:"category_id"`
 	ID          uint      `json:"id"`
 	CategoryId  uint      `json:"categoryId"`
 	Name        string    `json:"name"`
