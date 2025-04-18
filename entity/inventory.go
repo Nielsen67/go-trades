@@ -10,13 +10,13 @@ type Inventory struct {
 }
 
 type CreateInventoryRequest struct {
+	ProductId uint   `json:"productId" binding:"required"`
 	Stock     uint   `json:"stock" binding:"required"`
 	Location  string `json:"location" binding:"required"`
-	ProductId uint   `json:"productId" binding:"required"`
 }
 
 type UpdateInventoryRequest struct {
-	Stock uint `json:"stock" binding:"min=0"`
+	Stock uint `json:"stock"`
 }
 
 type InventoryResponse struct {
@@ -26,7 +26,7 @@ type InventoryResponse struct {
 
 type InventoryDataResponse struct {
 	ID        uint   `json:"id"`
+	ProductId uint   `json:"productId"`
 	Stock     uint   `json:"stock"`
 	Location  string `json:"location"`
-	ProductId uint   `json:"productId"`
 }

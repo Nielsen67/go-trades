@@ -8,7 +8,7 @@ import (
 
 type Product struct {
 	gorm.Model
-	CategoryId    string         `gorm:"not null" json:"category_id"`
+	CategoryId    uint           `gorm:"not null" json:"categoryId"`
 	Name          string         `gorm:"not null;unique" json:"name"`
 	Description   string         `json:"description"`
 	Price         uint           `gorm:"not null" json:"price"`
@@ -26,27 +26,22 @@ type ProductImage struct {
 }
 
 type CreateProductRequest struct {
-	CategoryId  string `json:"category_id" binding:"required"`
+	CategoryId  uint   `json:"categoryId" binding:"required"`
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	Price       uint   `json:"price" binding:"required"`
 }
 
 type UpdateProductRequest struct {
-	CategoryId  string `json:"category_id" binding:"required"`
+	CategoryId  uint   `json:"categoryId" binding:"omitempty"`
 	Name        string `json:"name" binding:"omitempty"`
 	Description string `json:"description" binding:"omitempty"`
 	Price       uint   `json:"price" binding:"omitempty"`
 }
 
-type ProductResponse struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-}
-
 type ProductDataResponse struct {
-	CategoryId  string    `json:"category_id"`
 	ID          uint      `json:"id"`
+	CategoryId  uint      `json:"categoryId"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Price       uint      `json:"price"`

@@ -19,4 +19,7 @@ func main() {
 	//SETUP MIGRATION
 	config.Migrate(db)
 
+	//SETUP ROUTE
+	r := routeInit(db)
+	r.Run(":3000")
 }
