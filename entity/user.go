@@ -25,7 +25,6 @@ type User struct {
 	Email       string    `gorm:"unique;not null;size:255" json:"email"`
 	Phonenumber string    `gorm:"unique;not null" json:"phoneNumber"`
 	Role        Role      `gorm:"not null;type:enum('admin', 'customer');default:customer" json:"role"`
-	Token       string    `gorm:"default:null" json:"access_token"`
 	Orders      []Order   `gorm:"foreignKey:UserId"`
 }
 
