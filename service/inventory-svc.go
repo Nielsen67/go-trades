@@ -6,28 +6,32 @@ import (
 	"go-trades/repository"
 	"go-trades/utils"
 	errorMessages "go-trades/utils/error-messages"
+
+	"github.com/gin-gonic/gin"
 )
 
 type inventoryService struct {
-	Repository repository.InventoryRepository
+	InventoryRepository repository.InventoryRepository
+	ProductRepository   repository.ProductRepository
 }
 
 type InventoryService interface {
-	GetAllInventories() (*utils.Response, error)
-	GetInventoryById(id uint) (*utils.Response, error)
-	CreateInventory(req *entity.CreateInventoryRequest) (*utils.Response, error)
-	UpdateInventory(id uint, req *entity.UpdateInventoryRequest) (*utils.Response, error)
-	DeleteInventory(id uint) error
+	GetAllInventories(ctx *gin.Context) (*utils.Response, error)
+	GetInventoryById(ctx *gin.Context, id uint) (*utils.Response, error)
+	CreateInventory(ctx *gin.Context, req *entity.CreateInventoryRequest) (*utils.Response, error)
+	UpdateInventory(ctx *gin.Context, id uint, req *entity.UpdateInventoryRequest) (*utils.Response, error)
+	DeleteInventory(ctx *gin.Context, id uint) error
 }
 
-func NewInventoryService(r repository.InventoryRepository) InventoryService {
+func NewInventoryService(ir repository.InventoryRepository, pr repository.ProductRepository) InventoryService {
 	return &inventoryService{
-		Repository: r,
+		InventoryRepository: ir,
+		ProductRepository:   pr,
 	}
 }
 
-func (s *inventoryService) GetAllInventories() (*utils.Response, error) {
-	inventories, err := s.Repository.FindAll()
+func (s *inventoryService) GetAllInventories(ctx *gin.Context) (*utils.Response, error) {
+	inventories, err := s.InventoryRepository.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +52,8 @@ func (s *inventoryService) GetAllInventories() (*utils.Response, error) {
 	}, nil
 }
 
-func (s *inventoryService) GetInventoryById(id uint) (*utils.Response, error) {
-	inventory, err := s.Repository.FindById(id)
+func (s *inventoryService) GetInventoryById(ctx *gin.Context, id uint) (*utils.Response, error) {
+	inventory, err := s.InventoryRepository.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +75,15 @@ func (s *inventoryService) GetInventoryById(id uint) (*utils.Response, error) {
 	}, nil
 }
 
-func (s *inventoryService) CreateInventory(req *entity.CreateInventoryRequest) (*utils.Response, error) {
+func (s *inventoryService) CreateInventory(ctx *gin.Context, req *entity.CreateInventoryRequest) (*utils.Response, error) {
+
+	product, err := s.ProductRepository.FindById(ctx, req.ProductId)
+	if err != nil {
+		return nil, err
+	}
+	if product == nil {
+		return nil, errors.New(errorMessages.ErrProductNotFound)
+	}
 
 	inventory := &entity.Inventory{
 		ProductId: req.ProductId,
@@ -79,11 +91,11 @@ func (s *inventoryService) CreateInventory(req *entity.CreateInventoryRequest) (
 		Location:  req.Location,
 	}
 
-	if err := s.Repository.CreateInventory(inventory); err != nil {
+	if err := s.InventoryRepository.CreateInventory(ctx, inventory); err != nil {
 		return nil, err
 	}
 
-	savedInventory, err := s.Repository.FindById(inventory.ID)
+	savedInventory, err := s.InventoryRepository.FindById(ctx, inventory.ID)
 	if err != nil {
 		return nil, errors.New("error loading inventory data")
 	}
@@ -102,9 +114,9 @@ func (s *inventoryService) CreateInventory(req *entity.CreateInventoryRequest) (
 	}, nil
 }
 
-func (s *inventoryService) UpdateInventory(id uint, req *entity.UpdateInventoryRequest) (*utils.Response, error) {
+func (s *inventoryService) UpdateInventory(ctx *gin.Context, id uint, req *entity.UpdateInventoryRequest) (*utils.Response, error) {
 
-	inventory, err := s.Repository.FindById(id)
+	inventory, err := s.InventoryRepository.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +131,7 @@ func (s *inventoryService) UpdateInventory(id uint, req *entity.UpdateInventoryR
 
 	inventory.Stock = req.Stock
 
-	if err := s.Repository.UpdateInventory(inventory); err != nil {
+	if err := s.InventoryRepository.UpdateInventory(ctx, inventory); err != nil {
 		return nil, err
 	}
 
@@ -137,8 +149,8 @@ func (s *inventoryService) UpdateInventory(id uint, req *entity.UpdateInventoryR
 	}, nil
 }
 
-func (s *inventoryService) DeleteInventory(id uint) error {
-	if err := s.Repository.DeleteInventory(id); err != nil {
+func (s *inventoryService) DeleteInventory(ctx *gin.Context, id uint) error {
+	if err := s.InventoryRepository.DeleteInventory(ctx, id); err != nil {
 		return err
 	}
 

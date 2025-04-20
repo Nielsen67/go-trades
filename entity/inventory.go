@@ -19,11 +19,6 @@ type UpdateInventoryRequest struct {
 	Stock uint `json:"stock"`
 }
 
-type InventoryResponse struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-}
-
 type InventoryDataResponse struct {
 	ID        uint   `json:"id"`
 	ProductId uint   `json:"productId"`

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go-trades/entity"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -12,13 +13,13 @@ type categoryRepository struct {
 }
 
 type CategoryRepository interface {
-	FindAll() ([]entity.Category, error)
-	FindById(id uint) (*entity.Category, error)
-	FindByName(name string) (*entity.Category, error)
-	FindByCode(code string) (*entity.Category, error)
-	CreateCategory(category *entity.Category) error
-	UpdateCategory(category *entity.Category) error
-	DeleteCategory(id uint) error
+	FindAll(ctx *gin.Context) ([]entity.Category, error)
+	FindById(ctx *gin.Context, id uint) (*entity.Category, error)
+	FindByName(ctx *gin.Context, name string) (*entity.Category, error)
+	FindByCode(ctx *gin.Context, code string) (*entity.Category, error)
+	CreateCategory(ctx *gin.Context, category *entity.Category) error
+	UpdateCategory(ctx *gin.Context, category *entity.Category) error
+	DeleteCategory(ctx *gin.Context, id uint) error
 }
 
 func NewCategoryRepository(db *gorm.DB) CategoryRepository {
@@ -27,7 +28,7 @@ func NewCategoryRepository(db *gorm.DB) CategoryRepository {
 	}
 }
 
-func (r *categoryRepository) FindAll() ([]entity.Category, error) {
+func (r *categoryRepository) FindAll(ctx *gin.Context) ([]entity.Category, error) {
 	var result []entity.Category
 	err := r.DB.Find(&result).Error
 	if err != nil {
@@ -36,7 +37,7 @@ func (r *categoryRepository) FindAll() ([]entity.Category, error) {
 	return result, nil
 }
 
-func (r *categoryRepository) FindById(id uint) (*entity.Category, error) {
+func (r *categoryRepository) FindById(ctx *gin.Context, id uint) (*entity.Category, error) {
 	var result entity.Category
 	err := r.DB.Where("id = ?", id).First(&result).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -48,7 +49,7 @@ func (r *categoryRepository) FindById(id uint) (*entity.Category, error) {
 	return &result, nil
 }
 
-func (r *categoryRepository) FindByCode(code string) (*entity.Category, error) {
+func (r *categoryRepository) FindByCode(ctx *gin.Context, code string) (*entity.Category, error) {
 	var result entity.Category
 	err := r.DB.Where("code = ?", code).First(&result).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -60,7 +61,7 @@ func (r *categoryRepository) FindByCode(code string) (*entity.Category, error) {
 	return &result, nil
 }
 
-func (r *categoryRepository) FindByName(name string) (*entity.Category, error) {
+func (r *categoryRepository) FindByName(ctx *gin.Context, name string) (*entity.Category, error) {
 	var result entity.Category
 	err := r.DB.Where("name = ?", name).First(&result).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -72,15 +73,15 @@ func (r *categoryRepository) FindByName(name string) (*entity.Category, error) {
 	return &result, nil
 }
 
-func (r *categoryRepository) CreateCategory(category *entity.Category) error {
+func (r *categoryRepository) CreateCategory(ctx *gin.Context, category *entity.Category) error {
 	return r.DB.Create(category).Error
 }
 
-func (r *categoryRepository) UpdateCategory(category *entity.Category) error {
+func (r *categoryRepository) UpdateCategory(ctx *gin.Context, category *entity.Category) error {
 	return r.DB.Save(category).Error
 }
 
-func (r *categoryRepository) DeleteCategory(id uint) error {
+func (r *categoryRepository) DeleteCategory(ctx *gin.Context, id uint) error {
 	var category entity.Category
 	if err := r.DB.First(&category, id).Error; err != nil {
 		return err

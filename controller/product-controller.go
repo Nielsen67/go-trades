@@ -34,7 +34,7 @@ func (c *ProductController) GetAllProducts(ctx *gin.Context) {
 		categoryId = uint(parsedId)
 	}
 
-	resp, err := c.Service.GetAllProducts(categoryId)
+	resp, err := c.Service.GetAllProducts(ctx, categoryId)
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -50,7 +50,7 @@ func (c *ProductController) GetProductById(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := c.Service.GetProductById(uint(id))
+	resp, err := c.Service.GetProductById(ctx, uint(id))
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -64,7 +64,7 @@ func (c *ProductController) CreateProduct(ctx *gin.Context) {
 	if err := utils.ValidateJson(ctx, &req); err != nil {
 		return
 	}
-	resp, err := c.Service.CreateProduct(&req)
+	resp, err := c.Service.CreateProduct(ctx, &req)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -85,7 +85,7 @@ func (c *ProductController) UpdateProduct(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := c.Service.UpdateProduct(uint(id), &req)
+	resp, err := c.Service.UpdateProduct(ctx, uint(id), &req)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -102,7 +102,7 @@ func (c *ProductController) DeleteProduct(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.Service.DeleteProduct(uint(id)); err != nil {
+	if err := c.Service.DeleteProduct(ctx, uint(id)); err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}

@@ -1,0 +1,6 @@
+package status
+
+const (
+	PENDING uint = 1
+	PAID    uint = 2
+)

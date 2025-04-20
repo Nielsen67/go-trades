@@ -22,7 +22,7 @@ func NewCategoryController(s service.CategoryService) *CategoryController {
 }
 
 func (c *CategoryController) GetAllCategories(ctx *gin.Context) {
-	resp, err := c.Service.GetAllCategories()
+	resp, err := c.Service.GetAllCategories(ctx)
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -38,7 +38,7 @@ func (c *CategoryController) GetCategoryById(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := c.Service.GetCategoryById(uint(id))
+	resp, err := c.Service.GetCategoryById(ctx, uint(id))
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -52,7 +52,7 @@ func (c *CategoryController) CreateCategory(ctx *gin.Context) {
 	if err := utils.ValidateJson(ctx, &req); err != nil {
 		return
 	}
-	resp, err := c.Service.CreateCategory(&req)
+	resp, err := c.Service.CreateCategory(ctx, &req)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -73,7 +73,7 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := c.Service.UpdateCategory(uint(id), &req)
+	resp, err := c.Service.UpdateCategory(ctx, uint(id), &req)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -90,7 +90,7 @@ func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.Service.DeleteCategory(uint(id)); err != nil {
+	if err := c.Service.DeleteCategory(ctx, uint(id)); err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}

@@ -44,11 +44,6 @@ type UserLoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-type UserResponse struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-}
-
 type UserDataResponse struct {
 	Id          int       `json:"id"`
 	Username    string    `json:"username"`

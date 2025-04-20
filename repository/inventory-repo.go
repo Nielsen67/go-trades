@@ -3,7 +3,9 @@ package repository
 import (
 	"errors"
 	"go-trades/entity"
+	"go-trades/utils"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -12,13 +14,16 @@ type inventoryRepository struct {
 }
 
 type InventoryRepository interface {
-	FindAll() ([]entity.Inventory, error)
-	FindById(id uint) (*entity.Inventory, error)
-	FindByName(name string) (*entity.Inventory, error)
-	FindByCode(code string) (*entity.Inventory, error)
-	CreateInventory(inventory *entity.Inventory) error
-	UpdateInventory(inventory *entity.Inventory) error
-	DeleteInventory(id uint) error
+	FindAll(ctx *gin.Context) ([]entity.Inventory, error)
+	FindById(ctx *gin.Context, id uint) (*entity.Inventory, error)
+	FindFirstByProductId(ctx *gin.Context, id uint) (*entity.Inventory, error)
+	FindByName(ctx *gin.Context, name string) (*entity.Inventory, error)
+	FindByCode(ctx *gin.Context, code string) (*entity.Inventory, error)
+	CreateInventory(ctx *gin.Context, inventory *entity.Inventory) error
+	UpdateInventory(ctx *gin.Context, inventory *entity.Inventory) error
+	UpdateInventoryForOrder(ctx *gin.Context, inventory *entity.Inventory, qty uint) error
+	DeleteInventory(ctx *gin.Context, id uint) error
+	resolveDB(tx *gorm.DB) *gorm.DB
 }
 
 func NewInventoryRepository(db *gorm.DB) InventoryRepository {
@@ -27,7 +32,14 @@ func NewInventoryRepository(db *gorm.DB) InventoryRepository {
 	}
 }
 
-func (r *inventoryRepository) FindAll() ([]entity.Inventory, error) {
+func (r *inventoryRepository) resolveDB(tx *gorm.DB) *gorm.DB {
+	if tx != nil {
+		return tx
+	}
+	return r.DB
+}
+
+func (r *inventoryRepository) FindAll(ctx *gin.Context) ([]entity.Inventory, error) {
 	var result []entity.Inventory
 	err := r.DB.Find(&result).Error
 	if err != nil {
@@ -36,7 +48,7 @@ func (r *inventoryRepository) FindAll() ([]entity.Inventory, error) {
 	return result, nil
 }
 
-func (r *inventoryRepository) FindById(id uint) (*entity.Inventory, error) {
+func (r *inventoryRepository) FindById(ctx *gin.Context, id uint) (*entity.Inventory, error) {
 	var result entity.Inventory
 	err := r.DB.Where("id = ?", id).First(&result).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -48,7 +60,7 @@ func (r *inventoryRepository) FindById(id uint) (*entity.Inventory, error) {
 	return &result, nil
 }
 
-func (r *inventoryRepository) FindByCode(code string) (*entity.Inventory, error) {
+func (r *inventoryRepository) FindByCode(ctx *gin.Context, code string) (*entity.Inventory, error) {
 	var result entity.Inventory
 	err := r.DB.Where("code = ?", code).First(&result).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -60,7 +72,7 @@ func (r *inventoryRepository) FindByCode(code string) (*entity.Inventory, error)
 	return &result, nil
 }
 
-func (r *inventoryRepository) FindByName(name string) (*entity.Inventory, error) {
+func (r *inventoryRepository) FindByName(ctx *gin.Context, name string) (*entity.Inventory, error) {
 	var result entity.Inventory
 	err := r.DB.Where("name = ?", name).First(&result).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -72,15 +84,36 @@ func (r *inventoryRepository) FindByName(name string) (*entity.Inventory, error)
 	return &result, nil
 }
 
-func (r *inventoryRepository) CreateInventory(inventory *entity.Inventory) error {
+func (r *inventoryRepository) FindFirstByProductId(ctx *gin.Context, id uint) (*entity.Inventory, error) {
+	var result entity.Inventory
+	db := utils.GetTx(ctx, r.DB)
+	err := db.Where("product_id = ?", id).First(&result).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (r *inventoryRepository) CreateInventory(ctx *gin.Context, inventory *entity.Inventory) error {
 	return r.DB.Create(inventory).Error
 }
 
-func (r *inventoryRepository) UpdateInventory(inventory *entity.Inventory) error {
+func (r *inventoryRepository) UpdateInventory(ctx *gin.Context, inventory *entity.Inventory) error {
 	return r.DB.Save(inventory).Error
 }
 
-func (r *inventoryRepository) DeleteInventory(id uint) error {
+func (r *inventoryRepository) UpdateInventoryForOrder(ctx *gin.Context, inventory *entity.Inventory, qty uint) error {
+	db := utils.GetTx(ctx, r.DB)
+	if err := db.Model(&inventory).Where("id = ?", inventory.ID).Update("stock", gorm.Expr("stock - ?", qty)).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *inventoryRepository) DeleteInventory(ctx *gin.Context, id uint) error {
 	var inventory entity.Inventory
 	if err := r.DB.First(&inventory, id).Error; err != nil {
 		return err

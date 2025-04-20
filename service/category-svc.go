@@ -7,6 +7,7 @@ import (
 	"go-trades/utils"
 	errorMessages "go-trades/utils/error-messages"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -15,11 +16,11 @@ type categoryService struct {
 }
 
 type CategoryService interface {
-	GetAllCategories() (*utils.Response, error)
-	GetCategoryById(id uint) (*utils.Response, error)
-	CreateCategory(req *entity.CategoryRequest) (*utils.Response, error)
-	UpdateCategory(id uint, req *entity.CategoryRequest) (*utils.Response, error)
-	DeleteCategory(id uint) error
+	GetAllCategories(ctx *gin.Context) (*utils.Response, error)
+	GetCategoryById(ctx *gin.Context, id uint) (*utils.Response, error)
+	CreateCategory(ctx *gin.Context, req *entity.CategoryRequest) (*utils.Response, error)
+	UpdateCategory(ctx *gin.Context, id uint, req *entity.CategoryRequest) (*utils.Response, error)
+	DeleteCategory(ctx *gin.Context, id uint) error
 }
 
 func NewCategoryService(r repository.CategoryRepository) CategoryService {
@@ -28,8 +29,8 @@ func NewCategoryService(r repository.CategoryRepository) CategoryService {
 	}
 }
 
-func (s *categoryService) GetAllCategories() (*utils.Response, error) {
-	categories, err := s.Repository.FindAll()
+func (s *categoryService) GetAllCategories(ctx *gin.Context) (*utils.Response, error) {
+	categories, err := s.Repository.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +50,8 @@ func (s *categoryService) GetAllCategories() (*utils.Response, error) {
 	}, nil
 }
 
-func (s *categoryService) GetCategoryById(id uint) (*utils.Response, error) {
-	category, err := s.Repository.FindById(id)
+func (s *categoryService) GetCategoryById(ctx *gin.Context, id uint) (*utils.Response, error) {
+	category, err := s.Repository.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +72,9 @@ func (s *categoryService) GetCategoryById(id uint) (*utils.Response, error) {
 	}, nil
 }
 
-func (s *categoryService) CreateCategory(req *entity.CategoryRequest) (*utils.Response, error) {
+func (s *categoryService) CreateCategory(ctx *gin.Context, req *entity.CategoryRequest) (*utils.Response, error) {
 
-	existingByName, err := s.Repository.FindByName(req.Name)
+	existingByName, err := s.Repository.FindByName(ctx, req.Name)
 	if err == nil && existingByName != nil {
 		return nil, errors.New(errorMessages.ErrCategoryNameExists)
 	}
@@ -81,7 +82,7 @@ func (s *categoryService) CreateCategory(req *entity.CategoryRequest) (*utils.Re
 		return nil, err
 	}
 
-	existingByCode, err := s.Repository.FindByCode(req.Code)
+	existingByCode, err := s.Repository.FindByCode(ctx, req.Code)
 	if err == nil && existingByCode != nil {
 		return nil, errors.New(errorMessages.ErrCategoryCodeExists)
 	}
@@ -94,11 +95,11 @@ func (s *categoryService) CreateCategory(req *entity.CategoryRequest) (*utils.Re
 		Name: req.Name,
 	}
 
-	if err := s.Repository.CreateCategory(category); err != nil {
+	if err := s.Repository.CreateCategory(ctx, category); err != nil {
 		return nil, err
 	}
 
-	savedCategory, err := s.Repository.FindById(category.ID)
+	savedCategory, err := s.Repository.FindById(ctx, category.ID)
 	if err != nil {
 		return nil, errors.New("error loading category data")
 	}
@@ -116,9 +117,9 @@ func (s *categoryService) CreateCategory(req *entity.CategoryRequest) (*utils.Re
 	}, nil
 }
 
-func (s *categoryService) UpdateCategory(id uint, req *entity.CategoryRequest) (*utils.Response, error) {
+func (s *categoryService) UpdateCategory(ctx *gin.Context, id uint, req *entity.CategoryRequest) (*utils.Response, error) {
 
-	category, err := s.Repository.FindById(id)
+	category, err := s.Repository.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +128,7 @@ func (s *categoryService) UpdateCategory(id uint, req *entity.CategoryRequest) (
 		return nil, errors.New(errorMessages.ErrCategoryNotFound)
 	}
 
-	existingByName, err := s.Repository.FindByName(req.Name)
+	existingByName, err := s.Repository.FindByName(ctx, req.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func (s *categoryService) UpdateCategory(id uint, req *entity.CategoryRequest) (
 		return nil, errors.New(errorMessages.ErrCategoryNameExists)
 	}
 
-	existingByCode, err := s.Repository.FindByCode(req.Code)
+	existingByCode, err := s.Repository.FindByCode(ctx, req.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +147,7 @@ func (s *categoryService) UpdateCategory(id uint, req *entity.CategoryRequest) (
 	category.Code = req.Code
 	category.Name = req.Name
 
-	if err := s.Repository.UpdateCategory(category); err != nil {
+	if err := s.Repository.UpdateCategory(ctx, category); err != nil {
 		return nil, err
 	}
 
@@ -163,8 +164,8 @@ func (s *categoryService) UpdateCategory(id uint, req *entity.CategoryRequest) (
 	}, nil
 }
 
-func (s *categoryService) DeleteCategory(id uint) error {
-	if err := s.Repository.DeleteCategory(id); err != nil {
+func (s *categoryService) DeleteCategory(ctx *gin.Context, id uint) error {
+	if err := s.Repository.DeleteCategory(ctx, id); err != nil {
 		return err
 	}
 

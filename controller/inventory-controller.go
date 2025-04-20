@@ -22,7 +22,7 @@ func NewInventoryController(s service.InventoryService) *InventoryController {
 }
 
 func (c *InventoryController) GetAllInventories(ctx *gin.Context) {
-	resp, err := c.Service.GetAllInventories()
+	resp, err := c.Service.GetAllInventories(ctx)
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -38,7 +38,7 @@ func (c *InventoryController) GetInventoryById(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := c.Service.GetInventoryById(uint(id))
+	resp, err := c.Service.GetInventoryById(ctx, uint(id))
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -52,7 +52,7 @@ func (c *InventoryController) CreateInventory(ctx *gin.Context) {
 	if err := utils.ValidateJson(ctx, &req); err != nil {
 		return
 	}
-	resp, err := c.Service.CreateInventory(&req)
+	resp, err := c.Service.CreateInventory(ctx, &req)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -73,7 +73,7 @@ func (c *InventoryController) UpdateInventory(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := c.Service.UpdateInventory(uint(id), &req)
+	resp, err := c.Service.UpdateInventory(ctx, uint(id), &req)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -90,7 +90,7 @@ func (c *InventoryController) DeleteInventory(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.Service.DeleteInventory(uint(id)); err != nil {
+	if err := c.Service.DeleteInventory(ctx, uint(id)); err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}

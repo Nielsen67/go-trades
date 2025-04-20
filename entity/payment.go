@@ -22,13 +22,8 @@ type Payment struct {
 
 type PaymentRequest struct {
 	OrderId uint   `json:"orderId"`
-	Method  string `json:"method"`
+	Method  Method `json:"method"`
 	Amount  uint   `json:"amount"`
-}
-
-type PaymentResponse struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
 }
 
 type PaymentDataResponse struct {

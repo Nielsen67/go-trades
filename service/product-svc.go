@@ -8,6 +8,7 @@ import (
 
 	errorMessages "go-trades/utils/error-messages"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -16,11 +17,11 @@ type productService struct {
 }
 
 type ProductService interface {
-	GetAllProducts(categoryId uint) (*utils.Response, error)
-	GetProductById(id uint) (*utils.Response, error)
-	CreateProduct(req *entity.CreateProductRequest) (*utils.Response, error)
-	UpdateProduct(id uint, req *entity.UpdateProductRequest) (*utils.Response, error)
-	DeleteProduct(id uint) error
+	GetAllProducts(ctx *gin.Context, categoryId uint) (*utils.Response, error)
+	GetProductById(ctx *gin.Context, id uint) (*utils.Response, error)
+	CreateProduct(ctx *gin.Context, req *entity.CreateProductRequest) (*utils.Response, error)
+	UpdateProduct(ctx *gin.Context, id uint, req *entity.UpdateProductRequest) (*utils.Response, error)
+	DeleteProduct(ctx *gin.Context, id uint) error
 }
 
 func NewProductService(r repository.ProductRepository) ProductService {
@@ -29,19 +30,19 @@ func NewProductService(r repository.ProductRepository) ProductService {
 	}
 }
 
-func (s *productService) GetAllProducts(categoryId uint) (*utils.Response, error) {
+func (s *productService) GetAllProducts(ctx *gin.Context, categoryId uint) (*utils.Response, error) {
 
 	var products []entity.Product
 	var err error
 
 	if categoryId != 0 {
-		products, err = s.Repository.FindByCategoryId(categoryId)
+		products, err = s.Repository.FindByCategoryId(ctx, categoryId)
 		if err != nil {
 			return nil, err
 		}
 
 	} else {
-		products, err = s.Repository.FindAll()
+		products, err = s.Repository.FindAll(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -67,8 +68,8 @@ func (s *productService) GetAllProducts(categoryId uint) (*utils.Response, error
 	}, nil
 }
 
-func (s *productService) GetProductById(id uint) (*utils.Response, error) {
-	product, err := s.Repository.FindById(id)
+func (s *productService) GetProductById(ctx *gin.Context, id uint) (*utils.Response, error) {
+	product, err := s.Repository.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -93,9 +94,9 @@ func (s *productService) GetProductById(id uint) (*utils.Response, error) {
 	}, nil
 }
 
-func (s *productService) CreateProduct(req *entity.CreateProductRequest) (*utils.Response, error) {
+func (s *productService) CreateProduct(ctx *gin.Context, req *entity.CreateProductRequest) (*utils.Response, error) {
 
-	existingByName, err := s.Repository.FindByName(req.Name)
+	existingByName, err := s.Repository.FindByName(ctx, req.Name)
 	if err == nil && existingByName != nil {
 		return nil, errors.New(errorMessages.ErrProductNameExists)
 	}
@@ -110,35 +111,30 @@ func (s *productService) CreateProduct(req *entity.CreateProductRequest) (*utils
 		Price:       req.Price,
 	}
 
-	if err := s.Repository.CreateProduct(product); err != nil {
+	if err := s.Repository.CreateProduct(ctx, product); err != nil {
 		return nil, err
 	}
 
-	savedProduct, err := s.Repository.FindById(product.ID)
-	if err != nil {
-		return nil, errors.New("error loading product data")
-	}
-
-	productData := entity.ProductDataResponse{
-		ID:          savedProduct.ID,
-		CategoryId:  savedProduct.CategoryId,
-		Name:        savedProduct.Name,
-		Description: savedProduct.Description,
-		Price:       savedProduct.Price,
-		CreatedAt:   savedProduct.CreatedAt,
-		UpdatedAt:   savedProduct.UpdatedAt,
+	data := entity.ProductDataResponse{
+		ID:          product.ID,
+		CategoryId:  product.CategoryId,
+		Name:        product.Name,
+		Description: product.Description,
+		Price:       product.Price,
+		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
 	}
 
 	return &utils.Response{
 		Status:  201,
 		Message: "Product successfully created",
-		Data:    productData,
+		Data:    data,
 	}, nil
 }
 
-func (s *productService) UpdateProduct(id uint, req *entity.UpdateProductRequest) (*utils.Response, error) {
+func (s *productService) UpdateProduct(ctx *gin.Context, id uint, req *entity.UpdateProductRequest) (*utils.Response, error) {
 
-	product, err := s.Repository.FindById(id)
+	product, err := s.Repository.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +143,7 @@ func (s *productService) UpdateProduct(id uint, req *entity.UpdateProductRequest
 		return nil, errors.New(errorMessages.ErrProductNotFound)
 	}
 
-	existingByName, err := s.Repository.FindByName(req.Name)
+	existingByName, err := s.Repository.FindByName(ctx, req.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -160,11 +156,11 @@ func (s *productService) UpdateProduct(id uint, req *entity.UpdateProductRequest
 	product.Description = req.Description
 	product.Price = req.Price
 
-	if err := s.Repository.UpdateProduct(product); err != nil {
+	if err := s.Repository.UpdateProduct(ctx, product); err != nil {
 		return nil, err
 	}
 
-	productData := entity.ProductDataResponse{
+	data := entity.ProductDataResponse{
 		ID:          product.ID,
 		CategoryId:  product.CategoryId,
 		Name:        product.Name,
@@ -177,12 +173,12 @@ func (s *productService) UpdateProduct(id uint, req *entity.UpdateProductRequest
 	return &utils.Response{
 		Status:  200,
 		Message: "Product successfully updated",
-		Data:    productData,
+		Data:    data,
 	}, nil
 }
 
-func (s *productService) DeleteProduct(id uint) error {
-	if err := s.Repository.DeleteProduct(id); err != nil {
+func (s *productService) DeleteProduct(ctx *gin.Context, id uint) error {
+	if err := s.Repository.DeleteProduct(ctx, id); err != nil {
 		return err
 	}
 
