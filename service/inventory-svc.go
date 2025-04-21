@@ -16,7 +16,7 @@ type inventoryService struct {
 }
 
 type InventoryService interface {
-	GetAllInventories(ctx *gin.Context) (*utils.Response, error)
+	GetAllInventories(ctx *gin.Context, page, size int) (*utils.Response, int64, int64, error)
 	GetInventoryById(ctx *gin.Context, id uint) (*utils.Response, error)
 	CreateInventory(ctx *gin.Context, req *entity.CreateInventoryRequest) (*utils.Response, error)
 	UpdateInventory(ctx *gin.Context, id uint, req *entity.UpdateInventoryRequest) (*utils.Response, error)
@@ -30,10 +30,10 @@ func NewInventoryService(ir repository.InventoryRepository, pr repository.Produc
 	}
 }
 
-func (s *inventoryService) GetAllInventories(ctx *gin.Context) (*utils.Response, error) {
-	inventories, err := s.InventoryRepository.FindAll(ctx)
+func (s *inventoryService) GetAllInventories(ctx *gin.Context, page, size int) (*utils.Response, int64, int64, error) {
+	inventories, totalSize, err := s.InventoryRepository.FindAll(ctx, page, size)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 	data := make([]entity.InventoryDataResponse, len(inventories))
 	for i, inventory := range inventories {
@@ -45,11 +45,13 @@ func (s *inventoryService) GetAllInventories(ctx *gin.Context) (*utils.Response,
 		}
 	}
 
+	totalPage := utils.GetTotalPage(totalSize, size)
+
 	return &utils.Response{
 		Status:  200,
 		Message: "Success",
 		Data:    data,
-	}, nil
+	}, totalSize, totalPage, nil
 }
 
 func (s *inventoryService) GetInventoryById(ctx *gin.Context, id uint) (*utils.Response, error) {

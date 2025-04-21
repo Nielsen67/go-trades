@@ -67,6 +67,8 @@ func (r *reportRepository) FindLowStock(ctx *gin.Context) ([]entity.LowInventory
 		inventories i
 	JOIN 
 		products p ON p.id = i.product_id
+	WHERE
+		i.stock <= 5
 	ORDER BY 
 		i.stock ASC
 	LIMIT 5

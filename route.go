@@ -24,7 +24,7 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 	categoryController := controller.NewCategoryController(categoryService)
 
 	productRepository := repository.NewProductRepository(conn)
-	productService := service.NewProductService(productRepository)
+	productService := service.NewProductService(productRepository, categoryRepository)
 	productController := controller.NewProductController(productService)
 
 	inventoryRepository := repository.NewInventoryRepository(conn)
@@ -65,6 +65,7 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 			bothRoles.GET("/products/:id", productController.GetProductById)
 			bothRoles.GET("/orders", orderController.GetAllOrders)
 			bothRoles.GET("/orders/:id", orderController.GetOrderById)
+			bothRoles.GET("/payments", paymentController.GetAllPayments)
 		}
 
 		// Admin-only routes
@@ -90,10 +91,10 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 			admin.PUT("/inventories/:id", inventoryController.UpdateInventory)
 			admin.DELETE("/inventories/:id", inventoryController.DeleteInventory)
 
-			// Order routes (admin actions)
+			// Order routes
 			admin.POST("/orders/:id/process", orderController.ProcessOrder)
 
-			// Report routes (admin actions)
+			// Report routes
 			admin.GET("/reports", reportController.GetReport)
 		}
 
@@ -107,7 +108,6 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 			customer.DELETE("/orders/:id", orderController.CancelOrder)
 
 			// Payment routes
-			customer.GET("/payments", paymentController.GetAllPayments)
 			customer.POST("/payments", paymentController.CreatePayment)
 		}
 	}

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"go-trades/config"
 	"go-trades/entity"
 	"strings"
@@ -63,4 +64,17 @@ func AuthMiddleware() gin.HandlerFunc {
 		ctx.Set("role", entity.Role(role))
 		ctx.Next()
 	}
+}
+
+func IsAdmin(ctx *gin.Context) (bool, error) {
+	role, exists := ctx.Get("role")
+	if !exists {
+		return false, errors.New("role not found in context")
+	}
+
+	if role.(entity.Role) != entity.Admin {
+		return false, nil
+
+	}
+	return true, nil
 }

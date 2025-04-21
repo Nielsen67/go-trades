@@ -16,7 +16,7 @@ type categoryService struct {
 }
 
 type CategoryService interface {
-	GetAllCategories(ctx *gin.Context) (*utils.Response, error)
+	GetAllCategories(ctx *gin.Context, page, size int) (*utils.Response, int64, int64, error)
 	GetCategoryById(ctx *gin.Context, id uint) (*utils.Response, error)
 	CreateCategory(ctx *gin.Context, req *entity.CategoryRequest) (*utils.Response, error)
 	UpdateCategory(ctx *gin.Context, id uint, req *entity.CategoryRequest) (*utils.Response, error)
@@ -29,11 +29,12 @@ func NewCategoryService(r repository.CategoryRepository) CategoryService {
 	}
 }
 
-func (s *categoryService) GetAllCategories(ctx *gin.Context) (*utils.Response, error) {
-	categories, err := s.Repository.FindAll(ctx)
+func (s *categoryService) GetAllCategories(ctx *gin.Context, page, size int) (*utils.Response, int64, int64, error) {
+	categories, totalSize, err := s.Repository.FindAll(ctx, page, size)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
+
 	data := make([]entity.CategoryDataResponse, len(categories))
 	for i, category := range categories {
 		data[i] = entity.CategoryDataResponse{
@@ -43,11 +44,13 @@ func (s *categoryService) GetAllCategories(ctx *gin.Context) (*utils.Response, e
 		}
 	}
 
+	totalPage := utils.GetTotalPage(totalSize, size)
+
 	return &utils.Response{
 		Status:  200,
 		Message: "Success",
 		Data:    data,
-	}, nil
+	}, totalSize, totalPage, nil
 }
 
 func (s *categoryService) GetCategoryById(ctx *gin.Context, id uint) (*utils.Response, error) {

@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"go-trades/entity"
 	"go-trades/utils"
 
@@ -14,11 +13,9 @@ type paymentRepository struct {
 }
 
 type PaymentRepository interface {
-	FindAll(ctx *gin.Context) ([]entity.Payment, error)
-	FindById(ctx *gin.Context, id uint) (*entity.Payment, error)
-	FindByOrderId(ctx *gin.Context, id uint) (*entity.Payment, error)
+	FindAll(ctx *gin.Context, page, size int) ([]entity.Payment, int64, error)
 	CreatePayment(ctx *gin.Context, payment *entity.Payment) error
-	resolveDB(tx *gorm.DB) *gorm.DB
+	FindAllByUserId(ctx *gin.Context, userId uint, page, size int) ([]entity.Payment, int64, error)
 }
 
 func NewPaymentRepository(db *gorm.DB) PaymentRepository {
@@ -27,44 +24,46 @@ func NewPaymentRepository(db *gorm.DB) PaymentRepository {
 	}
 }
 
-func (r *paymentRepository) resolveDB(tx *gorm.DB) *gorm.DB {
-	if tx != nil {
-		return tx
-	}
-	return r.DB
-}
-
-func (r *paymentRepository) FindAll(ctx *gin.Context) ([]entity.Payment, error) {
+func (r *paymentRepository) FindAll(ctx *gin.Context, page, size int) ([]entity.Payment, int64, error) {
 	var result []entity.Payment
-	err := r.DB.Find(&result).Error
-	if err != nil {
-		return nil, err
+	var total int64
+
+	if err := r.DB.Model(&entity.Payment{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	return result, nil
+
+	offset := (page - 1) * size
+	err := r.DB.Offset(offset).Limit(size).Find(&result).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return result, total, nil
 }
 
-func (r *paymentRepository) FindById(ctx *gin.Context, id uint) (*entity.Payment, error) {
-	var result entity.Payment
-	err := r.DB.Where("id = ?", id).First(&result).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
+func (r *paymentRepository) FindAllByUserId(ctx *gin.Context, userId uint, page, size int) ([]entity.Payment, int64, error) {
+	var result []entity.Payment
+	var total int64
 
-func (r *paymentRepository) FindByOrderId(ctx *gin.Context, id uint) (*entity.Payment, error) {
-	var result entity.Payment
-	err := r.DB.Where("order_id = ?", id).First(&result).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
+	if err := r.DB.Model(&entity.Payment{}).
+		Joins("JOIN orders ON orders.id = payments.order_id").
+		Where("orders.user_id = ?", userId).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
+
+	offset := (page - 1) * size
+	err := r.DB.Model(&entity.Payment{}).
+		Joins("JOIN orders ON orders.id = payments.order_id").
+		Where("orders.user_id = ?", userId).
+		Offset(offset).
+		Limit(size).
+		Find(&result).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return &result, nil
+
+	return result, total, nil
 }
 
 func (r *paymentRepository) CreatePayment(ctx *gin.Context, payment *entity.Payment) error {

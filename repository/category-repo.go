@@ -13,7 +13,7 @@ type categoryRepository struct {
 }
 
 type CategoryRepository interface {
-	FindAll(ctx *gin.Context) ([]entity.Category, error)
+	FindAll(ctx *gin.Context, page, size int) ([]entity.Category, int64, error)
 	FindById(ctx *gin.Context, id uint) (*entity.Category, error)
 	FindByName(ctx *gin.Context, name string) (*entity.Category, error)
 	FindByCode(ctx *gin.Context, code string) (*entity.Category, error)
@@ -28,13 +28,21 @@ func NewCategoryRepository(db *gorm.DB) CategoryRepository {
 	}
 }
 
-func (r *categoryRepository) FindAll(ctx *gin.Context) ([]entity.Category, error) {
+func (r *categoryRepository) FindAll(ctx *gin.Context, page, size int) ([]entity.Category, int64, error) {
 	var result []entity.Category
-	err := r.DB.Find(&result).Error
-	if err != nil {
-		return nil, err
+	var total int64
+
+	if err := r.DB.Model(&entity.Category{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	return result, nil
+
+	offset := (page - 1) * size
+	err := r.DB.Offset(offset).Limit(size).Find(&result).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return result, total, nil
 }
 
 func (r *categoryRepository) FindById(ctx *gin.Context, id uint) (*entity.Category, error) {

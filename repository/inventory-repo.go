@@ -14,14 +14,14 @@ type inventoryRepository struct {
 }
 
 type InventoryRepository interface {
-	FindAll(ctx *gin.Context) ([]entity.Inventory, error)
+	FindAll(ctx *gin.Context, page, size int) ([]entity.Inventory, int64, error)
 	FindById(ctx *gin.Context, id uint) (*entity.Inventory, error)
 	FindFirstByProductId(ctx *gin.Context, id uint) (*entity.Inventory, error)
 	FindByName(ctx *gin.Context, name string) (*entity.Inventory, error)
 	FindByCode(ctx *gin.Context, code string) (*entity.Inventory, error)
 	CreateInventory(ctx *gin.Context, inventory *entity.Inventory) error
 	UpdateInventory(ctx *gin.Context, inventory *entity.Inventory) error
-	UpdateInventoryForOrder(ctx *gin.Context, inventory *entity.Inventory, qty uint) error
+	UpdateInventoryForOrder(ctx *gin.Context, inventory *entity.Inventory, qty uint, action string) error
 	DeleteInventory(ctx *gin.Context, id uint) error
 	resolveDB(tx *gorm.DB) *gorm.DB
 }
@@ -39,13 +39,21 @@ func (r *inventoryRepository) resolveDB(tx *gorm.DB) *gorm.DB {
 	return r.DB
 }
 
-func (r *inventoryRepository) FindAll(ctx *gin.Context) ([]entity.Inventory, error) {
+func (r *inventoryRepository) FindAll(ctx *gin.Context, page, size int) ([]entity.Inventory, int64, error) {
 	var result []entity.Inventory
-	err := r.DB.Find(&result).Error
-	if err != nil {
-		return nil, err
+	var total int64
+
+	if err := r.DB.Model(&entity.Inventory{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	return result, nil
+
+	offset := (page - 1) * size
+	err := r.DB.Offset(offset).Limit(size).Find(&result).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return result, total, nil
 }
 
 func (r *inventoryRepository) FindById(ctx *gin.Context, id uint) (*entity.Inventory, error) {
@@ -105,10 +113,18 @@ func (r *inventoryRepository) UpdateInventory(ctx *gin.Context, inventory *entit
 	return r.DB.Save(inventory).Error
 }
 
-func (r *inventoryRepository) UpdateInventoryForOrder(ctx *gin.Context, inventory *entity.Inventory, qty uint) error {
+func (r *inventoryRepository) UpdateInventoryForOrder(ctx *gin.Context, inventory *entity.Inventory, qty uint, action string) error {
 	db := utils.GetTx(ctx, r.DB)
-	if err := db.Model(&inventory).Where("id = ?", inventory.ID).Update("stock", gorm.Expr("stock - ?", qty)).Error; err != nil {
-		return err
+
+	switch action {
+	case "create":
+		if err := db.Model(&inventory).Where("id = ?", inventory.ID).Update("stock", gorm.Expr("stock - ?", qty)).Error; err != nil {
+			return err
+		}
+	case "cancel":
+		if err := db.Model(&inventory).Where("id = ?", inventory.ID).Update("stock", gorm.Expr("stock + ?", qty)).Error; err != nil {
+			return err
+		}
 	}
 	return nil
 }

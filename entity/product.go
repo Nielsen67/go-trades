@@ -45,6 +45,7 @@ type ProductDataResponse struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Price       uint      `json:"price"`
+	Stock       uint      `json:"stock"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }

@@ -18,8 +18,9 @@ type paymentService struct {
 }
 
 type PaymentService interface {
-	GetAllPayments(ctx *gin.Context) (*utils.Response, error)
-	CreatePayment(ctx *gin.Context, req *entity.PaymentRequest) (*utils.Response, error)
+	GetAllPayments(ctx *gin.Context, page, size int) (*utils.Response, int64, int64, error)
+	CreatePayment(ctx *gin.Context, userId uint, req *entity.PaymentRequest) (*utils.Response, error)
+	GetUserPayments(ctx *gin.Context, userId uint, page, size int) (*utils.Response, int64, int64, error)
 }
 
 func NewPaymentService(db *gorm.DB, pr repository.PaymentRepository, or repository.OrderRepository) PaymentService {
@@ -30,10 +31,10 @@ func NewPaymentService(db *gorm.DB, pr repository.PaymentRepository, or reposito
 	}
 }
 
-func (s *paymentService) GetAllPayments(ctx *gin.Context) (*utils.Response, error) {
-	payments, err := s.PaymentRepository.FindAll(ctx)
+func (s *paymentService) GetAllPayments(ctx *gin.Context, page, size int) (*utils.Response, int64, int64, error) {
+	payments, totalSize, err := s.PaymentRepository.FindAll(ctx, page, size)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 	data := make([]entity.PaymentDataResponse, len(payments))
 	for i, payment := range payments {
@@ -47,14 +48,43 @@ func (s *paymentService) GetAllPayments(ctx *gin.Context) (*utils.Response, erro
 		}
 	}
 
+	totalPage := utils.GetTotalPage(totalSize, size)
+
 	return &utils.Response{
 		Status:  200,
 		Message: "Success",
 		Data:    data,
-	}, nil
+	}, totalSize, totalPage, nil
 }
 
-func (s *paymentService) CreatePayment(ctx *gin.Context, req *entity.PaymentRequest) (*utils.Response, error) {
+func (s *paymentService) GetUserPayments(ctx *gin.Context, userId uint, page, size int) (*utils.Response, int64, int64, error) {
+	payments, totalSize, err := s.PaymentRepository.FindAllByUserId(ctx, userId, page, size)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	data := make([]entity.PaymentDataResponse, len(payments))
+	for i, payment := range payments {
+		data[i] = entity.PaymentDataResponse{
+			ID:        payment.ID,
+			OrderId:   payment.OrderId,
+			Method:    payment.Method,
+			Amount:    payment.Amount,
+			Status:    payment.Status,
+			CreatedAt: payment.CreatedAt,
+		}
+	}
+
+	totalPage := utils.GetTotalPage(totalSize, size)
+
+	return &utils.Response{
+		Status:  200,
+		Message: "Success",
+		Data:    data,
+	}, totalSize, totalPage, nil
+}
+
+func (s *paymentService) CreatePayment(ctx *gin.Context, userId uint, req *entity.PaymentRequest) (*utils.Response, error) {
 
 	tx := s.db.Begin()
 	utils.WithTx(ctx, tx)
@@ -67,14 +97,14 @@ func (s *paymentService) CreatePayment(ctx *gin.Context, req *entity.PaymentRequ
 		}
 	}()
 
-	order, err := s.OrderRepository.FindById(ctx, req.OrderId)
+	order, err := s.OrderRepository.FindByUserIdWithId(ctx, userId, req.OrderId)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 	if order == nil {
 		tx.Rollback()
-		return nil, errors.New(errorMessages.ErrProductNotFound)
+		return nil, errors.New(errorMessages.ErrOrderNotFound)
 	}
 
 	if order.Status != 1 {

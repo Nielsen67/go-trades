@@ -22,11 +22,28 @@ func NewCategoryController(s service.CategoryService) *CategoryController {
 }
 
 func (c *CategoryController) GetAllCategories(ctx *gin.Context) {
-	resp, err := c.Service.GetAllCategories(ctx)
+
+	page := utils.DefaultPage
+	size := utils.DefaultSize
+
+	var pagination utils.Pagination
+	if err := ctx.ShouldBindQuery(&pagination); err == nil {
+		if pagination.Page > 0 {
+			page = pagination.Page
+		}
+		if pagination.Size > 0 {
+			size = pagination.Size
+		}
+	}
+
+	resp, totalSize, totalPage, err := c.Service.GetAllCategories(ctx, page, size)
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
+
+	ctx.Header("x-total-count", strconv.FormatInt(totalSize, 10))
+	ctx.Header("x-total-page", strconv.FormatInt(totalPage, 10))
 
 	ctx.JSON(200, resp)
 }
