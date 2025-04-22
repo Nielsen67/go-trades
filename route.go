@@ -27,6 +27,10 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 	productService := service.NewProductService(productRepository, categoryRepository)
 	productController := controller.NewProductController(productService)
 
+	productImageRepository := repository.NewProductImageRepository(conn)
+	productImageService := service.NewProductImageService(conn, productImageRepository, productRepository)
+	productImageController := controller.NewProductImageController(productImageService)
+
 	inventoryRepository := repository.NewInventoryRepository(conn)
 	inventoryService := service.NewInventoryService(inventoryRepository, productRepository)
 	inventoryController := controller.NewInventoryController(inventoryService)
@@ -83,6 +87,8 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 			admin.POST("/products", productController.CreateProduct)
 			admin.PUT("/products/:id", productController.UpdateProduct)
 			admin.DELETE("/products/:id", productController.DeleteProduct)
+			admin.POST("/products/:id/images", productImageController.UploadProductImage)
+			admin.GET("/products/:id/images", productImageController.DownloadProductImages)
 
 			// Inventory routes
 			admin.GET("/inventories", inventoryController.GetAllInventories)
