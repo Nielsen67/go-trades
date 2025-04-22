@@ -17,14 +17,6 @@ type Product struct {
 	ProductImages []ProductImage `gorm:"foreignKey:ProductId"`
 }
 
-type ProductImage struct {
-	ID         uint      `gorm:"primarykey;autoIncrement"`
-	ProductId  uint      `json:"productId"`
-	ImageUrl   string    `gorm:"type:text" json:"imageUrl"`
-	FileName   string    `json:"fileName"`
-	UploadedAt time.Time `json:"uploadedAt"`
-}
-
 type CreateProductRequest struct {
 	CategoryId  uint   `json:"categoryId" binding:"required"`
 	Name        string `json:"name" binding:"required"`
