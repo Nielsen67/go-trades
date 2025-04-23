@@ -90,6 +90,7 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 			admin.DELETE("/products/:id", productController.DeleteProduct)
 			admin.POST("/products/:id/images", productImageController.UploadProductImage)
 
+
 			// Inventory routes
 			admin.GET("/inventories", inventoryController.GetAllInventories)
 			admin.GET("/inventories/:id", inventoryController.GetInventoryById)
