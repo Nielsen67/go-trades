@@ -70,6 +70,7 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 			bothRoles.GET("/orders", orderController.GetAllOrders)
 			bothRoles.GET("/orders/:id", orderController.GetOrderById)
 			bothRoles.GET("/payments", paymentController.GetAllPayments)
+			bothRoles.GET("/products/:id/images", productImageController.DownloadProductImages)
 		}
 
 		// Admin-only routes
@@ -88,7 +89,6 @@ func routeInit(conn *gorm.DB) *gin.Engine {
 			admin.PUT("/products/:id", productController.UpdateProduct)
 			admin.DELETE("/products/:id", productController.DeleteProduct)
 			admin.POST("/products/:id/images", productImageController.UploadProductImage)
-			admin.GET("/products/:id/images", productImageController.DownloadProductImages)
 
 			// Inventory routes
 			admin.GET("/inventories", inventoryController.GetAllInventories)
