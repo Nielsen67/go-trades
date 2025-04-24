@@ -20,4 +20,5 @@ var (
 	ErrCategoryNotFound           = "category not found"
 	ErrCategoryNameExists         = "category name exists"
 	ErrCategoryCodeExists         = "category code exists"
+	ErrUserNotExists              = "user not exists"
 )

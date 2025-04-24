@@ -1,4 +1,4 @@
-version: "3.8"
+version : "3.8"
 
 services:
   db:
@@ -8,12 +8,12 @@ services:
       - .env
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME}       
+      - MYSQL_DATABASE=${DB_NAME}
     ports:
       - "3300:3300"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
     networks:

@@ -310,31 +310,39 @@ func (s *orderService) CreateOrder(ctx *gin.Context, userId uint, req *entity.Cr
 }
 
 func (s *orderService) ProcessOrder(ctx *gin.Context, id uint) (*utils.Response, error) {
-	product, err := s.OrderRepository.FindById(ctx, id)
+	order, err := s.OrderRepository.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	if product == nil {
+	if order == nil {
 		return nil, errors.New(errorMessages.ErrProductNotFound)
 	}
 
-	if product.Status != status.PAID {
+	if order.Status != status.PAID {
 		return nil, errors.New(errorMessages.ErrInvalidOrderStatus)
 	}
 
-	product.Status = status.PROCESSING
-	if err := s.OrderRepository.UpdateOrder(ctx, product); err != nil {
+	order.Status = status.PROCESSING
+	if err := s.OrderRepository.UpdateOrder(ctx, order); err != nil {
 		return nil, err
 	}
 	data := entity.OrderDataResponse{
-		ID:                  product.ID,
-		UserId:              product.UserId,
-		Date:                product.Date,
-		ShippingAddress:     product.ShippingAddress,
-		Total:               product.Total,
-		Status:              product.Status,
-		OrderDetailResponse: make([]entity.OrderDetailResponse, len(product.OrderDetails)),
+		ID:                  order.ID,
+		UserId:              order.UserId,
+		Date:                order.Date,
+		ShippingAddress:     order.ShippingAddress,
+		Total:               order.Total,
+		Status:              order.Status,
+		OrderDetailResponse: make([]entity.OrderDetailResponse, len(order.OrderDetails)),
+	}
+
+	for i, od := range order.OrderDetails {
+		data.OrderDetailResponse[i] = entity.OrderDetailResponse{
+			ProductId: od.ProductId,
+			Qty:       od.Qty,
+			Subtotal:  od.Subtotal,
+		}
 	}
 
 	return &utils.Response{
@@ -371,6 +379,14 @@ func (s *orderService) ConfirmOrder(ctx *gin.Context, userId uint, id uint) (*ut
 		Total:               order.Total,
 		Status:              order.Status,
 		OrderDetailResponse: make([]entity.OrderDetailResponse, len(order.OrderDetails)),
+	}
+
+	for i, od := range order.OrderDetails {
+		data.OrderDetailResponse[i] = entity.OrderDetailResponse{
+			ProductId: od.ProductId,
+			Qty:       od.Qty,
+			Subtotal:  od.Subtotal,
+		}
 	}
 
 	return &utils.Response{

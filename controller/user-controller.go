@@ -4,6 +4,8 @@ import (
 	"go-trades/entity"
 	"go-trades/service"
 	"go-trades/utils"
+	errorMessages "go-trades/utils/error-messages"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -95,4 +97,20 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, resp)
+}
+
+func (c *UserController) AssignAsAdmin(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": errorMessages.ErrUserNotExists})
+		return
+	}
+
+	err = c.Service.AssignAsAdmin(ctx, uint(id))
+	if err != nil {
+		ctx.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(200, "User assigned as admin successfully")
 }

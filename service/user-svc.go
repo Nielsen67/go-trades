@@ -21,6 +21,7 @@ type UserService interface {
 	Register(ctx *gin.Context, req *entity.UserRegisterRequest) (*entity.UserDataResponse, error)
 	Login(ctx *gin.Context, req *entity.UserLoginRequest) (*entity.UserLoginResponse, error)
 	ChangePassword(ctx *gin.Context, userId uint, req *entity.UserChangePassword) (*entity.UserChangePasswordResponse, error)
+	AssignAsAdmin(ctx *gin.Context, userId uint) error
 }
 
 func NewUserService(r repository.UserRepository) UserService {
@@ -152,4 +153,23 @@ func (s *userService) ChangePassword(ctx *gin.Context, userId uint, req *entity.
 	}
 
 	return &entity.UserChangePasswordResponse{Message: "Password changed successfully"}, nil
+}
+
+func (s *userService) AssignAsAdmin(ctx *gin.Context, userId uint) error {
+	user, err := s.Repository.FindById(ctx, userId)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	if user.Role == entity.Admin {
+		return errors.New("user is already admin")
+	}
+
+	user.Role = entity.Admin
+
+	if err := s.Repository.Update(ctx, user); err != nil {
+		return err
+	}
+
+	return err
 }
