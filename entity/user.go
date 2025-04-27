@@ -68,7 +68,7 @@ type UserChangePasswordResponse struct {
 }
 
 type UserLoginResponse struct {
-	Token string `json:"access_token"`
+	Token string `json:"accessToken"`
 }
 
 func (u *User) HashPassword(password string) error {
