@@ -112,5 +112,5 @@ func (c *UserController) AssignAsAdmin(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, "User assigned as admin successfully")
+	ctx.JSON(200, gin.H{"message": "User assigned as admin successfully"})
 }
