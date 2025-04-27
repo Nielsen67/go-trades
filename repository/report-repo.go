@@ -88,7 +88,7 @@ func (r *reportRepository) GenerateOrderSummary(ctx *gin.Context, start time.Tim
         FROM 
             orders o
         WHERE 
-            o.status = 2 AND o.date BETWEEN ? AND ?
+            o.status IN (2,3,4) AND o.date BETWEEN ? AND ?
     `, start, end).Scan(&result).Error
 
 	return &result, err

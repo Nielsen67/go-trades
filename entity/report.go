@@ -20,6 +20,6 @@ type LowInventoryItem struct {
 
 type OrderSummary struct {
 	TotalOrders    uint `json:"totalOrders"`
-	TotalAmount    uint `json:"totalQty"`
+	TotalAmount    uint `json:"totalAmount"`
 	TotalCustomers uint `json:"totalCustomers"`
 }
